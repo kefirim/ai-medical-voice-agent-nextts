@@ -1,5 +1,8 @@
+
 import { openai } from "@/config/OpenAiModel";
+
 import { AIDoctorAgents } from "@/shared/list";
+
 import { NextRequest, NextResponse } from "next/server";
 
 // 🔧 Fonction pour compléter les docteurs depuis la liste réelle
@@ -64,3 +67,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
+
+   
