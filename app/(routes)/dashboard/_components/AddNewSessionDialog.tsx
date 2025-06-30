@@ -77,9 +77,9 @@ function AddNewSessionDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger>
-        <Button className="mt-3">+ Start a Consultation</Button>
-      </DialogTrigger>
+     <DialogTrigger asChild>
+  <Button className="mt-3">+ Start a Consultation</Button>
+</DialogTrigger>
 
       <DialogContent>
         <DialogHeader>

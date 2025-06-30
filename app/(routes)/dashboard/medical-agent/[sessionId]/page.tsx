@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { doctorAgent } from "../../_components/DoctorAgentCard";
 import { Circle, PhoneCall, PhoneOff } from "lucide-react";
@@ -22,9 +22,12 @@ export default function MedicalVoiceAgent() {
   const { sessionId } = useParams();
   const [sessionDetail, setSessionDetail] = useState<SessionDetail>();
   const [callStarted, setCallStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<{ role: string; transcript: string }[]>([]);
   const vapiRef = useRef<any>(null);
 
+
+  const router= useRouter()
   // Initialiser Vapi
   useEffect(() => {
     const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
@@ -76,9 +79,34 @@ export default function MedicalVoiceAgent() {
     vapiRef.current?.start(process.env.NEXT_PUBLIC_VAPI_VOICE_ASSISTANT_ID!);
   };
 
-  const EndCall = () => {
+  const EndCall = async() => {
+    setLoading(true)
+    
     vapiRef.current?.stop(); // Pour la version actuelle de @vapi-ai/web
+    const result = await GenerateReport()
+    setLoading(false)
+    router.replace('/dashboard')
   };
+
+const GenerateReport = async () =>{
+   const result = await axios.post('/api/medical-report',{
+         messages: messages,
+         sessionDetail: sessionDetail,
+         sessionId: sessionId})
+
+    console.log(result.data);
+     return result.data;
+    
+         
+}
+    
+
+
+
+
+
+
+
 
   return (
     <div className="p-5 border rounded-3xl bg-secondary">
