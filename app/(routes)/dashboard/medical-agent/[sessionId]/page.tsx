@@ -8,8 +8,9 @@ import { Circle, PhoneCall, PhoneOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Vapi from "@vapi-ai/web";
+import { toast } from "sonner";
 
-type SessionDetail = {
+export type SessionDetail = {
   id: number;
   notes: string;
   sessionId: string;
@@ -25,35 +26,40 @@ export default function MedicalVoiceAgent() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<{ role: string; transcript: string }[]>([]);
   const vapiRef = useRef<any>(null);
+  const router = useRouter();
 
-
-  const router= useRouter()
   // Initialiser Vapi
   useEffect(() => {
     const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
 
-    vapi.on("call-start", () => {
+    const handleCallStart = () => {
       setCallStarted(true);
       console.log("Call started");
-    });
+    };
 
-    vapi.on("call-end", () => {
+    const handleCallEnd = () => {
       setCallStarted(false);
       console.log("Call ended");
-    });
+    };
 
-    vapi.on("message", (message) => {
+    const handleMessage = (message: any) => {
       if (message.type === "transcript") {
         console.log(`${message.role}: ${message.transcript}`);
         setMessages((prev) => [...prev, { role: message.role, transcript: message.transcript }]);
       }
-    });
+    };
+
+    vapi.on("call-start", handleCallStart);
+    vapi.on("call-end", handleCallEnd);
+    vapi.on("message", handleMessage);
 
     vapiRef.current = vapi;
 
     return () => {
       if (vapiRef.current) {
-        vapiRef.current.destroy();
+        vapi.off("call-start", handleCallStart);
+        vapi.off("call-end", handleCallEnd);
+        vapi.off("message", handleMessage);
         vapiRef.current = null;
       }
     };
@@ -79,34 +85,27 @@ export default function MedicalVoiceAgent() {
     vapiRef.current?.start(process.env.NEXT_PUBLIC_VAPI_VOICE_ASSISTANT_ID!);
   };
 
-  const EndCall = async() => {
-    setLoading(true)
-    
-    vapiRef.current?.stop(); // Pour la version actuelle de @vapi-ai/web
-    const result = await GenerateReport()
-    setLoading(false)
-    router.replace('/dashboard')
+  const EndCall = async () => {
+    setLoading(true);
+
+    vapiRef.current?.stop();
+
+    const result = await GenerateReport();
+    setLoading(false);
+    toast.success('Your report is generated!')
+    router.replace("/dashboard");
   };
 
-const GenerateReport = async () =>{
-   const result = await axios.post('/api/medical-report',{
-         messages: messages,
-         sessionDetail: sessionDetail,
-         sessionId: sessionId})
+  const GenerateReport = async () => {
+    const result = await axios.post("/api/medical-report", {
+      messages: messages,
+      sessionDetail: sessionDetail,
+      sessionId: sessionId,
+    });
 
     console.log(result.data);
-     return result.data;
-    
-         
-}
-    
-
-
-
-
-
-
-
+    return result.data;
+  };
 
   return (
     <div className="p-5 border rounded-3xl bg-secondary">
@@ -134,25 +133,23 @@ const GenerateReport = async () =>{
           <p className="text-sm text-gray-400">AI Medical Agent</p>
 
           {/* Zone des messages */}
-        {/* Zone des messages - sans scroll, style fluide et responsive */}
-<div className="mt-10 w-full flex flex-col gap-3">
-  {messages.slice(-8).map((msg, index) => (
-    <div
-      key={index}
-      className={`max-w-[70%] px-4 py-2 rounded-xl text-sm shadow-sm ${
-        msg.role === "assistant"
-          ? "bg-blue-100 text-black self-start"
-          : "bg-gray-200 text-gray-900 self-end"
-      }`}
-    >
-      <strong className="block mb-1 text-xs text-gray-500">
-        {msg.role === "assistant" ? "Assistant" : "You"}
-      </strong>
-      <p className="break-words">{msg.transcript}</p>
-    </div>
-  ))}
-</div>
-
+          <div className="mt-10 w-full flex flex-col gap-3">
+            {messages.slice(-8).map((msg, index) => (
+              <div
+                key={index}
+                className={`max-w-[70%] px-4 py-2 rounded-xl text-sm shadow-sm ${
+                  msg.role === "assistant"
+                    ? "bg-blue-100 text-black self-start"
+                    : "bg-gray-200 text-gray-900 self-end"
+                }`}
+              >
+                <strong className="block mb-1 text-xs text-gray-500">
+                  {msg.role === "assistant" ? "Assistant" : "You"}
+                </strong>
+                <p className="break-words">{msg.transcript}</p>
+              </div>
+            ))}
+          </div>
 
           {!callStarted ? (
             <Button className="mt-10" onClick={StartCall}>
