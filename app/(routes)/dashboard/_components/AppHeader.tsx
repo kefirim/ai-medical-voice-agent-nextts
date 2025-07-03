@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 
 const menuOptions = [
-  { id: 1, name: 'Home', path: '/home' },
+  { id: 1, name: 'Home', path: '/' },
   { id: 2, name: 'History', path: '/dashboard/history' },
   { id: 3, name: 'Pricing', path: '/pricing' },
   { id: 4, name: 'Profile', path: '/profile' },
